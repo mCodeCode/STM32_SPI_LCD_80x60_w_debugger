@@ -36,12 +36,12 @@
 # TARGET: This sets the name of the program.                                   #
 #         It's used as a prefix for the output files.                          #
 # **************************************************************************** #
-TARGET = hello_led_stm32
+TARGET = your_program_name_here
 
 # **************************************************************************** #
 # BUILD_DIR: Directory where all compiled outputs will be stored.              #
 # **************************************************************************** #
-BUILD_DIR = compiledProgram
+BUILD_DIR = compiledProgramFolder
 
 
 
@@ -61,6 +61,7 @@ OTHER_SRCS = main.c gpio_spi_helper.c
 #           Also be aware that some levels (usually -O3) may require you to    #
 #           add additional support functions like memcpy and memset.           #
 # **************************************************************************** #
+#essential flags for the debugger do not remove
 OPTFLAGS = -O0 -g
 
 
