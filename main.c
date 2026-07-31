@@ -22,11 +22,15 @@ int main(void) {
 
     //draw test squares
 
-    // ST7735_DrawFilledRect(0, 0, 80, 160, ST7735_WHITE); // Fill with Black
+    ST7735_DrawFilledRect(0, 0, 80, 160, ST7735_BLACK); // Fill with Black / clear screen
+
     ST7735_DrawFilledRect(0, 0, 30, 30, ST7735_GREEN);
-    ST7735_DrawFilledRect(40, 0, 30, 30, ST7735_ORANGE_1);
-    ST7735_DrawFilledRect(0, 40, 30, 30, ST7735_YELLOW);
-    ST7735_DrawFilledRect(40, 40, 30, 30, ST7735_WHITE);
+    ST7735_DrawFilledRect(40, 0, 30, 30, ST7735_CORAL);
+    ST7735_DrawFilledRect(80, 0, 30, 30, ST7735_YELLOW);
+    ST7735_DrawFilledRect(0, 40, 30, 30, ST7735_ORANGE_1);
+    ST7735_DrawFilledRect(40, 40, 30, 30, ST7735_RED);
+    ST7735_DrawFilledRect(80, 40, 30, 30, ST7735_INDIGO);
+
 
 
     // Keep the program running so it doesn't exit

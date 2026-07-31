@@ -21,10 +21,10 @@
 #define ST7735_YSTART 0
 #define ST7735_WIDTH  80
 #define ST7735_HEIGHT 160 
-#define ST7735_ROTATION (ST7735_MADCTL_MX | ST7735_MADCTL_RGB)
-// #define ST7735_ROTATION (ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_MADCTL_RGB)
-// #define ST7735_ROTATION (ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_MADCTL_BGR)
 
+//the only working config for my display, Y controls the horizontal axis,
+// X controls the vertical one, i fixed this on the draw method
+#define ST7735_ROTATION (ST7735_MADCTL_MX | ST7735_MADCTL_BGR)
 
 // mini 160x80, rotate left
 /*

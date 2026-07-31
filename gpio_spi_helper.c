@@ -77,7 +77,7 @@ static const uint8_t
     ST7735_RASET  , 4      ,  //  2: Row addr set, 4 args, no delay:
       0x00, 0x00,             //     XSTART = 0
       0x00, 0x9F ,            //     XEND = 159
-    ST7735_INVOFF, 0 },        //  3: Invert colors
+    ST7735_INVOFF, 0 },        //  3: Invert colors ST7735_INVON
 #endif
 
   init_cmds3[] = {            // Init for 7735R, part 3 (red or green tab)
@@ -284,10 +284,7 @@ void ST7735_Init(void) {
     ST7735_ExecuteCommandList(init_cmds1);
     ST7735_ExecuteCommandList(init_cmds2); // Choose your specific screen size array
     ST7735_ExecuteCommandList(init_cmds3);
-
-    // 3. Wipe screen memory to remove boot static
-    // Adjust 80 and 160 to match your physical panel size
-    ST7735_DrawFilledRect(0, 0, 80, 160, ST7735_BLACK); // Fill with Black
+    
 }
 
 //-------------------------------------------------------------------------------
@@ -417,9 +414,31 @@ void ST7735_SetAddressWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
 //     }
 // }
 
+
+//HELPER TO SWAP THE COORDINATES FOR DRAWING
+// 1. Define a structure to hold the two values
+typedef struct {
+    int a;
+    int b;
+} SwapResult;
+
+// 2. Implement the swap method returning the struct
+SwapResult swapValues(int a, int b) {
+    SwapResult result;
+    result.a = b; // Put B into a's slot
+    result.b = a; // Put A into b's slot
+    return result;
+}
+
 //------------------------------
 // Function to draw a filled rectangle/square (Optimized with continuous CS hold)
 void ST7735_DrawFilledRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t color) {
+
+    // SWAP THE COORDINATES FOR DRAWING
+    SwapResult result = swapValues(x, y);
+    x = result.a; 
+    y = result.b;
+
     // 1. Set the address window to cover the entire width and height of the square
     // (Note: ST7735_SetAddressWindow ends with LCD_WriteCommand(0x2C) which is RAMWR)
     ST7735_SetAddressWindow(x, y, x + w - 1, y + h - 1);
@@ -432,8 +451,8 @@ void ST7735_DrawFilledRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t 
 
     // 4. Stream every pixel color back-to-back without toggling CS
     for (uint32_t i = 0; i < totalPixels; i++) {
-        SPI1_SendByte(color >> 8);   // Send high byte
-        SPI1_SendByte(color & 0xFF); // Send low byte
+      SPI1_SendByte(color >> 8);   // Send high byte
+      SPI1_SendByte(color & 0xFF); // Send low byte
     }
 
     // 5. Close the data stream (pulls CS High)
