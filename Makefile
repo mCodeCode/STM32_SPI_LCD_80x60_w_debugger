@@ -36,12 +36,12 @@
 # TARGET: This sets the name of the program.                                   #
 #         It's used as a prefix for the output files.                          #
 # **************************************************************************** #
-TARGET = your_program_name_here
+TARGET = hello_led_stm32
 
 # **************************************************************************** #
 # BUILD_DIR: Directory where all compiled outputs will be stored.              #
 # **************************************************************************** #
-BUILD_DIR = compiledProgramFolder
+BUILD_DIR = compiledProgram
 
 
 
@@ -49,7 +49,7 @@ BUILD_DIR = compiledProgramFolder
 # OTHER_SRCS: List here all the .c files that needs to be compiled.            #
 #             You can separete them using a space.                             #
 # **************************************************************************** #
-OTHER_SRCS = main.c gpio_spi_helper.c
+OTHER_SRCS = main.c gpio_spi_helper.c drawlib.c
 
 
 
@@ -61,7 +61,6 @@ OTHER_SRCS = main.c gpio_spi_helper.c
 #           Also be aware that some levels (usually -O3) may require you to    #
 #           add additional support functions like memcpy and memset.           #
 # **************************************************************************** #
-#essential flags for the debugger do not remove
 OPTFLAGS = -O0 -g
 
 
@@ -100,12 +99,18 @@ CFLAGS += -Wall -Wextra
 CFLAGS += -fno-common -static
 CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 
+# LDFLAGS += -march=armv7-m -mabi=aapcs
+# LDFLAGS += -nostartfiles -nostdlib -lgcc
+# LDFLAGS += -T$(LINKER_SCRIPT)
 LDFLAGS += -march=armv7-m -mabi=aapcs
-LDFLAGS += -nostartfiles -nostdlib -lgcc
+LDFLAGS += -nostartfiles
 LDFLAGS += -T$(LINKER_SCRIPT)
+LDFLAGS += -lm -lgcc
+# LDFLAGS += -Wl,--start-group -lc -lm -lgcc -Wl,--end-group
 
 CC = $(CROSS_COMPILE)gcc
-LD = $(CROSS_COMPILE)ld
+# LD = $(CROSS_COMPILE)ld
+LD = $(CROSS_COMPILE)gcc
 OBJDUMP = $(CROSS_COMPILE)objdump
 OBJCOPY = $(CROSS_COMPILE)objcopy
 SIZE = $(CROSS_COMPILE)size
@@ -140,8 +145,10 @@ debug_build: CFLAGS += -fstack-usage
 debug_build: LDFLAGS += -Xlinker -Map=$(BUILD_DIR)/$(TARGET).map
 debug_build: $(BUILD_DIR)/$(TARGET).elf
 
+# $(BUILD_DIR)/$(TARGET).elf: $(OBJS) | $(BUILD_DIR)
+# 	$(SILENCE)$(CC) $(LDFLAGS) $(COMFLAGS) $(OBJS) -o "$@"
 $(BUILD_DIR)/$(TARGET).elf: $(OBJS) | $(BUILD_DIR)
-	$(SILENCE)$(CC) $(LDFLAGS) $(COMFLAGS) $(OBJS) -o "$@"
+	$(SILENCE)$(CC) $(COMFLAGS) $(OBJS) $(LDFLAGS) -o "$@"
 
 .SECONDARY: $(OBJS)
 

@@ -216,11 +216,10 @@ void setupSTM32(void){
     // * Bit 8 (SSI): Internal Slave Select (1 = Keep internal slave select high so master mode isn't faulted)
 
     //The ST7735 controller typically expects CPOL = 0 and CPHA = 0 (Mode 0) or CPOL = 1 and CPHA = 1 (Mode 3).
-
     // SPI_CR1_REGISTER = (1 << 2) | (1 << 6) | (1 << 8) | (1 << 9) | (2 << 3);
 
     // or
-    SPI_CR1_REGISTER = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 6) | (1 << 8) | (1 << 9) | (2 << 3);
+    SPI_CR1_REGISTER = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 6) | (1 << 8) | (1 << 9) | (0 << 3);
 
 };
 
@@ -271,7 +270,7 @@ void ST7735_Init(void) {
     // Pull RES low,
     GPIOA_BRR_REGISTER = (1 << RESET_PIN_N);
     
-    // wait 50ms 
+    // wait 150ms 
     delay_Ms((150));
     
     //pull RES high    
@@ -295,25 +294,35 @@ void ST7735_Init(void) {
 //-------------------------------------------------------------------------------
 //SPI HELPER METHODS
 
-
+//-------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 // Open the data stream: CS Low, D/C High (Data mode)
 void LCD_StartData(void) {
     GPIOA_BRR_REGISTER = (1 << CHIP_SELECT_PIN_N);   // CS Low
     GPIOA_BSRR_REGISTER = (1 << DATA_COMMAND_PIN_N); // D/C High (Data)
 }
 
+
+//-------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 // Close the data stream: Wait for transmission to finish, then CS High
 void LCD_EndData(void) {
     while (SPI_SR_REGISTER & (1 << 7));              // Wait until SPI is completely not busy (BSY bit)
     GPIOA_BSRR_REGISTER = (1 << CHIP_SELECT_PIN_N);  // CS High
 }
 
+
+//-------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 // 1. Raw byte sender (assumes CS is already held LOW by the caller)
 void SPI1_SendByte(uint8_t data) {
     while (!(SPI_SR_REGISTER & (1 << 1))); // Wait for TXE
     SPI_DR_REGISTER = data;
 }
 
+
+//-------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 // 2. Write a single command byte (CS goes low, sends command, CS goes high)
 void LCD_WriteCommand(uint8_t cmd) {
     GPIOA_BRR_REGISTER = (1 << CHIP_SELECT_PIN_N);  // CS Low
@@ -325,6 +334,9 @@ void LCD_WriteCommand(uint8_t cmd) {
     GPIOA_BSRR_REGISTER = (1 << CHIP_SELECT_PIN_N);  // CS High
 }
 
+
+//-------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 // 3. Write a single data byte (CS goes low, sends data, CS goes high)
 void LCD_WriteData(uint8_t data) {
     GPIOA_BRR_REGISTER = (1 << CHIP_SELECT_PIN_N);  // CS Low
@@ -334,127 +346,4 @@ void LCD_WriteData(uint8_t data) {
     
     while (SPI_SR_REGISTER & (1 << 7));               // Wait until SPI is completely done
     GPIOA_BSRR_REGISTER = (1 << CHIP_SELECT_PIN_N);  // CS High
-}
-
-//-------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------
-//ST7735 HELPER METHODS FOR DRAWING
-// Function to set the active drawing window to a specific single pixel (or area)
-/*
-Calling ST7735_SetAddressWindow(x0, y0, x1, y1) defines a rectangular bounding box inside the screen's RAM. Any color bytes you stream immediately afterward via RAMWR (0x2C) will fill that box pixel-by-pixel, wrapping automatically from left-to-right and top-to-bottom like a typewriter
-*/
-//------------------------------
-void ST7735_SetAddressWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
-
-    x0 += ST7735_XSTART;
-    x1 += ST7735_XSTART;
-    y0 += ST7735_YSTART;
-    y1 += ST7735_YSTART;
-
-
-    // 1. Column Address Set Command (CASET = 0x2A)
-    LCD_WriteCommand(0x2A);
-    LCD_WriteData(0x00);
-    LCD_WriteData(x0);    // Start X
-    LCD_WriteData(0x00);
-    LCD_WriteData(x1);    // End X
-
-    // 2. Row Address Set Command (RASET = 0x2B)
-    LCD_WriteCommand(0x2B);
-    LCD_WriteData(0x00);
-    LCD_WriteData(y0);    // Start Y
-    LCD_WriteData(0x00);
-    LCD_WriteData(y1);    // End Y
-
-    // 3. Memory Write Command (RAMWR = 0x2C) - Tells screen color data is coming next
-    LCD_WriteCommand(0x2C);
-}
-
-// this 2 commands together
-// LCD_WriteData(color >> 8);
-// LCD_WriteData(color & 0xFF);
-// send only 1 pixel of color data
-//for after defining the draw area with set address window
-//you need to send in a loop enough commands for all the pixels you selected
-
-
-//------------------------------
-// Function to draw a single pixel
-// void ST7735_DrawPixel(uint8_t x, uint8_t y, uint16_t color) {
-//     // Restrict window to just that 1x1 coordinate
-//     ST7735_SetAddressWindow(x, y, x, y);
-
-//     // Send the 16-bit color in two 8-bit chunks over SPI_DR_REGISTER
-//     // High byte first, then low byte
-//     LCD_WriteData(color >> 8);   // Sends upper 8 bits (e.g., 0xF8 for red)
-//     LCD_WriteData(color & 0xFF); // Sends lower 8 bits (e.g., 0x00 for red)
-// }
-
-
-
-// //------------------------------
-// void ST7735_DrawHorizontalLine(uint8_t x, uint8_t y, uint8_t w, uint16_t color) {
-//     ST7735_SetAddressWindow(x, y, x + w - 1, y);
-//     for (uint8_t i = 0; i < w; i++) {
-//         LCD_WriteData(color >> 8);
-//         LCD_WriteData(color & 0xFF);
-//     }
-// }
-
-// //------------------------------
-// void ST7735_DrawVerticalLine(uint8_t x, uint8_t y, uint8_t h, uint16_t color) {
-//     ST7735_SetAddressWindow(x, y, x, y + h - 1);
-//     for (uint8_t i = 0; i < h; i++) {
-//         LCD_WriteData(color >> 8);
-//         LCD_WriteData(color & 0xFF);
-//     }
-// }
-
-
-//HELPER TO SWAP THE COORDINATES FOR DRAWING
-// 1. Define a structure to hold the two values
-typedef struct {
-    int a;
-    int b;
-} SwapResult;
-
-// 2. Implement the swap method returning the struct
-SwapResult swapValues(int a, int b) {
-    SwapResult result;
-    result.a = b; // Put B into a's slot
-    result.b = a; // Put A into b's slot
-    return result;
-}
-
-//------------------------------
-// Function to draw a filled rectangle/square (Optimized with continuous CS hold)
-void ST7735_DrawFilledRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t color) {
-
-    // SWAP THE COORDINATES FOR DRAWING
-    SwapResult result = swapValues(x, y);
-    x = result.a; 
-    y = result.b;
-
-    // 1. Set the address window to cover the entire width and height of the square
-    // (Note: ST7735_SetAddressWindow ends with LCD_WriteCommand(0x2C) which is RAMWR)
-    ST7735_SetAddressWindow(x, y, x + w - 1, y + h - 1);
-
-    // 2. Calculate total number of pixels in the square
-    uint32_t totalPixels = (uint32_t)w * h;
-
-    // 3. Open the data stream and hold CS LOW for the entire bulk transfer
-    LCD_StartData();
-
-    // 4. Stream every pixel color back-to-back without toggling CS
-    for (uint32_t i = 0; i < totalPixels; i++) {
-      SPI1_SendByte(color >> 8);   // Send high byte
-      SPI1_SendByte(color & 0xFF); // Send low byte
-    }
-
-    // 5. Close the data stream (pulls CS High)
-    LCD_EndData();
 }

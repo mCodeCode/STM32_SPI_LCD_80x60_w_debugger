@@ -139,6 +139,8 @@ void setupSTM32(void);
 void delay_Ms(uint32_t ms);
 void sysTick_Init(void);
 void SPI1_SendByte(uint8_t data);
+void LCD_StartData(void);
+void LCD_EndData(void);
 void LCD_WriteCommand(uint8_t cmd);
 void LCD_WriteData(uint8_t data);
 

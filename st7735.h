@@ -107,18 +107,38 @@ typedef enum {
 
 
 
+//structure to hold a x ,y ,z point in space
+typedef struct {
+    short x;
+    short y;
+    short z;
+} Vector3D;
+
 void ST7735_Init(void);
 
-
+//----------------------------------------
 //draw helpers
 void ST7735_SetAddressWindow(unsigned char x0, unsigned char y0, unsigned char x1, unsigned char y1);
 
 void ST7735_DrawPixel(unsigned char x, unsigned char y, unsigned short color);
 
-void ST7735_DrawHorizontalLine(unsigned char x, unsigned char y, unsigned char w, unsigned short color);
+void ST7735_DrawLine(unsigned char x0, unsigned char y0, unsigned char x1, unsigned char y1, unsigned short color);
 
-void ST7735_DrawVerticalLine(unsigned char x, unsigned char y, unsigned char h, unsigned short color);
+void ST7735_DrawRect(unsigned char x, unsigned char y, unsigned char w, unsigned char h, unsigned short color);
 
 void ST7735_DrawFilledRect(unsigned char x, unsigned char y, unsigned char w, unsigned char h, unsigned short color);
+
+//--------------
+// 3D
+Vector3D ST7735_ProjectPoint(int x, int y, int z);
+
+void ST7735_Draw3DPoint(int x, int y, int z, unsigned short color);
+
+void ST7735_DrawBoxWireFrame(int startX, int startY, int startZ, int w, int h, int d, float angleX, float angleY, float angleZ, unsigned short color);
+
+void ST7735_DrawPyramidWireFrame(int startX, int startY, int startZ, int w, int h, int d, float angleX, float angleY, float angleZ, unsigned short color);
+
+// void ST7735_DrawBoxWireFrameVec(int startX, int startY, int startZ, int w, int h, int d, float angleX, float angleY, float angleZ, unsigned short color);
+
 
 #endif
