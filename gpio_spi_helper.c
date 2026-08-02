@@ -144,7 +144,7 @@ void delay_Ms(uint32_t ms) {
 void setupSTM32(void){
 
     // --------------------------------------------------
-    // 1. ENABLE CLOCK FOR GPIOA 
+    //  ENABLE CLOCK FOR GPIOA 
     // (Peripherals are off by default on STM32)
     // --------------------------------------------------
     // RCC APB2 peripheral clock enable register (RCC_APB2ENR) 
@@ -152,7 +152,7 @@ void setupSTM32(void){
     *(volatile uint32_t *)(RCC_BASE_ADDRESS + RCC_APB2ENR_REGISTER_OFFSET) |= (1 << GPIO_ENABLE_CONFIG_BIT_POS);
 
     // --------------------------------------------------
-    // 2. ENABLE CLOCK FOR SPI1
+    //  ENABLE CLOCK FOR SPI1
     // --------------------------------------------------
     // RCC APB2 peripheral clock enable register (RCC_APB2ENR) 
     // Bit 12 is SPI1EN
@@ -160,7 +160,7 @@ void setupSTM32(void){
 
 
     // --------------------------------------------------
-    // 3. CONFIGURE GPIO PINS FOR USE
+    //  CONFIGURE GPIO PINS FOR USE
     // --------------------------------------------------
      
     //-----------------------------
@@ -189,7 +189,42 @@ void setupSTM32(void){
 
 
     // --------------------------------------------------
-    // 4. CONFIGURE SPI1 PINS FOR USE
+    //  CONFIGURE GPIO BUTTON PINS FOR USE
+    // --------------------------------------------------
+
+    //change color btn
+    // 1. Clear the 4 bits for Pin 9 in CRH
+    GPIOA_CRH_REGISTER &= ~(0x0F << ((CHANGE_COLOR_BTN_PIN_N - 8) * 4));
+
+    // 2. Set Pin 9 to Input mode with pull-up/pull-down (Binary 1000 = 0x8)
+    GPIOA_CRH_REGISTER |=  (0x08 << ((CHANGE_COLOR_BTN_PIN_N - 8) * 4));
+
+    // 3. Enable Pull-UP by setting the ODR bit to 1 (when released, it reads HIGH/1)
+    GPIOA_ODR_REGISTER |= (1 << CHANGE_COLOR_BTN_PIN_N);
+
+    // animation  minus btn
+    // 1. Clear the 4 bits for Pin 10 in CRH
+    GPIOA_CRH_REGISTER &= ~(0x0F << ((ANIMATION_MINUS_BTN_PIN_N - 8) * 4));
+
+    // 2. Set Pin 10 to Input mode with pull-up/pull-down (Binary 1000 = 0x8)
+    GPIOA_CRH_REGISTER |=  (0x08 << ((ANIMATION_MINUS_BTN_PIN_N - 8) * 4));
+
+    // 3. Enable Pull-UP by setting the ODR bit to 1 (when released, it reads HIGH/1)
+    GPIOA_ODR_REGISTER |= (1 << ANIMATION_MINUS_BTN_PIN_N);
+
+    // animation  plus  btn
+    // 1. Clear the 4 bits for Pin 11 in CRH
+    GPIOA_CRH_REGISTER &= ~(0x0F << ((ANIMATION_PLUS_BTN_PIN_N - 8) * 4));
+
+    // 2. Set Pin 11 to Input mode with pull-up/pull-down (Binary 1000 = 0x8)
+    GPIOA_CRH_REGISTER |=  (0x08 << ((ANIMATION_PLUS_BTN_PIN_N - 8) * 4));
+
+    // 3. Enable Pull-UP by setting the ODR bit to 1 (when released, it reads HIGH/1)
+    GPIOA_ODR_REGISTER |= (1 << ANIMATION_PLUS_BTN_PIN_N);
+
+
+    // --------------------------------------------------
+    // CONFIGURE SPI1 PINS FOR USE
     // --------------------------------------------------
     //both spi1 pins are set like this:
     //configuration:  Alternate function output Push-Pull
@@ -204,7 +239,7 @@ void setupSTM32(void){
     GPIOA_CRL_REGISTER |=  (0x0B << (SPI1_MOSI_PIN_N * GPIO_SIZE));
 
     // --------------------------------------------------
-    // 5. CONFIGURE SPI1 SETTINGS
+    // CONFIGURE SPI1 SETTINGS
     // --------------------------------------------------
     // set up SPI1 as a Master with an 8-bit frame format
     // * Bit 6 (SPE): SPI Enable (1 = Enable SPI)

@@ -66,8 +66,11 @@
 // 1. Define the base address and offset
 #define GPIOA_BASE_ADDRESS           0x40010800
 #define GPIOA_CRL_REGISTER_OFFSET    0x00
+#define GPIOA_CRH_REGISTER_OFFSET    0x04
 #define GPIOA_BSRR_REGISTER_OFFSET   0x10
 #define GPIOA_BRR_REGISTER_OFFSET    0x14
+#define GPIOA_ODR_REGISTER_OFFSET    0x0C
+#define GPIOA_IDR_REGISTER_OFFSET    0x08
 
 #define RCC_BASE_ADDRESS             0x40021000
 #define RCC_APB2ENR_REGISTER_OFFSET  0x18
@@ -91,9 +94,17 @@
 //REGISTER SELECTION INSIDE GPIO PERIPHERIAL PORT
 #define GPIOA_CRL_REGISTER  (*(volatile uint32_t *)(GPIOA_BASE_ADDRESS + GPIOA_CRL_REGISTER_OFFSET))
 
+#define GPIOA_CRH_REGISTER  (*(volatile uint32_t *)(GPIOA_BASE_ADDRESS + GPIOA_CRH_REGISTER_OFFSET))
+
 #define GPIOA_BSRR_REGISTER  (*(volatile uint32_t *)(GPIOA_BASE_ADDRESS + GPIOA_BSRR_REGISTER_OFFSET))
 
 #define GPIOA_BRR_REGISTER  (*(volatile uint32_t *)(GPIOA_BASE_ADDRESS + GPIOA_BRR_REGISTER_OFFSET))
+
+#define GPIOA_ODR_REGISTER  (*(volatile uint32_t *)(GPIOA_BASE_ADDRESS + GPIOA_ODR_REGISTER_OFFSET))
+
+#define GPIOA_IDR_REGISTER  (*(volatile uint32_t *)(GPIOA_BASE_ADDRESS + GPIOA_IDR_REGISTER_OFFSET))
+
+
 
 //REGISTER SELECTION INSIDE SPI PERIPHERIAL
 #define SPI_CR1_REGISTER (*(volatile uint32_t *)(SPI_BASE_ADDRESS + SPI_CR1_REGISTER_OFFSET))
@@ -106,10 +117,15 @@
 //--------------------------------------------------------------------------------------
 
 //GPIO PINS  //const uint32_t
-#define GPIO_SIZE          4
-#define CHIP_SELECT_PIN_N  1
-#define DATA_COMMAND_PIN_N 2
-#define RESET_PIN_N        3
+#define GPIO_SIZE                  4
+#define CHIP_SELECT_PIN_N          1
+#define DATA_COMMAND_PIN_N         2
+#define RESET_PIN_N                3
+
+//buttons
+#define CHANGE_COLOR_BTN_PIN_N     9
+#define ANIMATION_MINUS_BTN_PIN_N  10
+#define ANIMATION_PLUS_BTN_PIN_N   11
 
 //SPI PINS 
 //according to the reference manual, the spi pins are :

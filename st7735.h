@@ -138,7 +138,8 @@ void ST7735_DrawBoxWireFrame(int startX, int startY, int startZ, int w, int h, i
 
 void ST7735_DrawPyramidWireFrame(int startX, int startY, int startZ, int w, int h, int d, float angleX, float angleY, float angleZ, unsigned short color);
 
-// void ST7735_DrawBoxWireFrameVec(int startX, int startY, int startZ, int w, int h, int d, float angleX, float angleY, float angleZ, unsigned short color);
+void ST7735_DrawOctahedronWireFrame(int startX, int startY, int startZ, int w, int h, int d, float angleX, float angleY, float angleZ, unsigned short color);
 
+void ST7735_DrawDodecahedronWireFrame(int startX, int startY, int startZ, int radius, float angleX, float angleY, float angleZ, unsigned short color);
 
 #endif

@@ -166,9 +166,7 @@ void ST7735_DrawLine(unsigned char x0, unsigned char y0, unsigned char x1, unsig
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
 
-// void ST7735_DrawRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t color) {
-// // QQQ
-// }
+
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
@@ -254,7 +252,7 @@ void ST7735_Draw3DPoint(int32_t x, int32_t y, int32_t z, uint16_t color) {
     }
 
     // Optional: Draw a 2x2 block so individual pixels are actually visible
-    uint8_t size = 3;
+    uint8_t size = 5;
     int16_t x2 = (pt.x + size < ST7735_WIDTH) ? (pt.x + size) : (ST7735_WIDTH - 1);
     int16_t y2 = (pt.y + size < ST7735_HEIGHT) ? (pt.y + size) : (ST7735_HEIGHT - 1);
 
@@ -371,6 +369,59 @@ Vector3D rotatePoint(Vector3D p, float cx, float cy, float cz, float sx, float s
 //-----------------------------------------------------------
 //-----------------------------------------------------------
 //-----------------------------------------------------------
+typedef struct {
+    float cx;
+    float cy;
+    float cz;
+    float sx;
+    float sy;
+    float sz;
+} anglesHelper;
+//-----------------------------------------------------------
+anglesHelper precomputeTrig(float angleX, float angleY, float angleZ){
+    // Precompute sine and cos for angles ONCE per object (saves CPU time)
+    float radX = angleX * (3.14159265f / 180.0f);
+    float radY = angleY * (3.14159265f / 180.0f);
+    float radZ = angleZ * (3.14159265f / 180.0f);
+
+    float cx = cosf(radX), sx = sinf(radX);
+    float cy = cosf(radY), sy = sinf(radY);
+    float cz = cosf(radZ), sz = sinf(radZ);
+
+    anglesHelper res = {
+        cx,
+        cy,
+        cz,
+        sx,
+        sy,
+        sz,
+    };
+
+    return res;
+}
+//-----------------------------------------------------------
+//-----------------------------------------------------------
+//-----------------------------------------------------------
+void drawSegment(Vector3D v1, Vector3D v2, anglesHelper trig, int32_t startX, int32_t startY, int32_t startZ, uint16_t color){
+ 
+        //rotate points according to selected angles
+        Vector3D v1Rot = rotatePoint(v1, trig.cx, trig.cy, trig.cz, trig.sx, trig.sy, trig.sz);
+        Vector3D v2Rot = rotatePoint(v2, trig.cx, trig.cy, trig.cz, trig.sx, trig.sy, trig.sz);
+
+        // Translate local vertices to the desired world starting position
+        Vector3D v1Tr = translatePoint(v1Rot, (Vector3D){startX, startY, startZ});
+        Vector3D v2Tr = translatePoint(v2Rot, (Vector3D){startX, startY, startZ});
+
+        // Project both 3D points into 2D screen space
+        Vector3D p1 = ST7735_ProjectPoint(v1Tr.x, v1Tr.y, v1Tr.z);
+        Vector3D p2 = ST7735_ProjectPoint(v2Tr.x, v2Tr.y, v2Tr.z);
+
+        // Draw line from p1 to p2 on the ST7735 screen
+        ST7735_DrawLine(p1.x, p1.y, p2.x, p2.y, color);
+};
+//-----------------------------------------------------------
+//-----------------------------------------------------------
+//-----------------------------------------------------------
 void ST7735_DrawBoxWireFrame(int32_t startX, int32_t startY, int32_t startZ, int32_t w, int32_t h, int32_t d, float angleX, float angleY, float angleZ, uint16_t color){
 
     // Half-dimensions to center the local shape around its own local origin (0,0,0)
@@ -402,16 +453,8 @@ void ST7735_DrawBoxWireFrame(int32_t startX, int32_t startY, int32_t startZ, int
     //-------------------------------
     //-------------------------------
     //-------------------------------
-
     // Precompute sine and cos for angles ONCE per object (saves CPU time)
-    float radX = angleX * (3.14159265f / 180.0f);
-    float radY = angleY * (3.14159265f / 180.0f);
-    float radZ = angleZ * (3.14159265f / 180.0f);
-
-    float cx = cosf(radX), sx = sinf(radX);
-    float cy = cosf(radY), sy = sinf(radY);
-    float cz = cosf(radZ), sz = sinf(radZ);
-
+    anglesHelper trig = precomputeTrig(angleX, angleY, angleZ);
 
     //Loop through indices, translate to world position, project, and draw
     for (int i = 0; i < 12; i++) {
@@ -420,22 +463,9 @@ void ST7735_DrawBoxWireFrame(int32_t startX, int32_t startY, int32_t startZ, int
         Vector3D v1 = cubeVertices[cubeIndices[i][0]];
         Vector3D v2 = cubeVertices[cubeIndices[i][1]];
 
-        //rotate points according to selected angles
-        Vector3D v1Rot = rotatePoint(v1, cx, cy, cz, sx, sy, sz);
-        Vector3D v2Rot = rotatePoint(v2, cx, cy, cz, sx, sy, sz);
-
-        // Translate local vertices to the desired world starting position
-        Vector3D v1Tr = translatePoint(v1Rot, (Vector3D){startX, startY, startZ});
-        Vector3D v2Tr = translatePoint(v2Rot, (Vector3D){startX, startY, startZ});
-
-        // Project both 3D points into 2D screen space
-        Vector3D p1 = ST7735_ProjectPoint(v1Tr.x, v1Tr.y, v1Tr.z);
-        Vector3D p2 = ST7735_ProjectPoint(v2Tr.x, v2Tr.y, v2Tr.z);
-
-        // Draw line from p1 to p2 on the ST7735 screen
-        ST7735_DrawLine(p1.x, p1.y, p2.x, p2.y, color);
+        //draw that part of the shape
+        drawSegment(v1, v2,trig, startX, startY, startZ, color);
     }
-
 
 }
 
@@ -499,14 +529,7 @@ void ST7735_DrawPyramidWireFrame(int32_t startX, int32_t startY, int32_t startZ,
     //-------------------------------
 
     // Precompute sine and cos for angles ONCE per object (saves CPU time)
-    float radX = angleX * (3.14159265f / 180.0f);
-    float radY = angleY * (3.14159265f / 180.0f);
-    float radZ = angleZ * (3.14159265f / 180.0f);
-
-    float cx = cosf(radX), sx = sinf(radX);
-    float cy = cosf(radY), sy = sinf(radY);
-    float cz = cosf(radZ), sz = sinf(radZ);
-
+    anglesHelper trig = precomputeTrig(angleX, angleY, angleZ);
 
     //Loop through indices, translate to world position, project, and draw
     for (int i = 0; i < 8; i++) {
@@ -515,20 +538,8 @@ void ST7735_DrawPyramidWireFrame(int32_t startX, int32_t startY, int32_t startZ,
         Vector3D v1 = pyramidVertices[pyramidIndices[i][0]];
         Vector3D v2 = pyramidVertices[pyramidIndices[i][1]];
 
-        //rotate points according to selected angles
-        Vector3D v1Rot = rotatePoint(v1, cx, cy, cz, sx, sy, sz);
-        Vector3D v2Rot = rotatePoint(v2, cx, cy, cz, sx, sy, sz);
-
-        // Translate local vertices to the desired world starting position
-        Vector3D v1Tr = translatePoint(v1Rot, (Vector3D){startX, startY, startZ});
-        Vector3D v2Tr = translatePoint(v2Rot, (Vector3D){startX, startY, startZ});
-
-        // Project both 3D points into 2D screen space
-        Vector3D p1 = ST7735_ProjectPoint(v1Tr.x, v1Tr.y, v1Tr.z);
-        Vector3D p2 = ST7735_ProjectPoint(v2Tr.x, v2Tr.y, v2Tr.z);
-
-        // Draw line from p1 to p2 on the ST7735 screen
-        ST7735_DrawLine(p1.x, p1.y, p2.x, p2.y, color);
+        //draw that part of the shape
+        drawSegment(v1, v2,trig, startX, startY, startZ, color);
         
     }
 
@@ -537,14 +548,100 @@ void ST7735_DrawPyramidWireFrame(int32_t startX, int32_t startY, int32_t startZ,
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
+void ST7735_DrawOctahedronWireFrame(int32_t startX, int32_t startY, int32_t startZ, int32_t w, int32_t h, int32_t d, float angleX, float angleY, float angleZ, uint16_t color){
 
+    
+    // Half-dimensions to center the local shape around its own local origin (0,0,0)
+    int32_t hw = w / 2;
+    int32_t hh = h / 2;
+    int32_t hd = d / 2;
+
+    // 5 vertices: 0 to 3 are the base plane, 4 is the tip at the center top
+    Vector3D pyramidVertices[6] = {
+        {-hw,  hh, -hd}, // 0: Back-Bottom-Left
+        { hw,  hh, -hd}, // 1: Back-Bottom-Right
+        { hw,  hh,  hd}, // 2: Front-Bottom-Right
+        {-hw,  hh,  hd}, // 3: Front-Bottom-Left
+        {  0, -hh,   0},  // 4: Tip (Center, shifted up by height)
+        {  0, 3 * hh,   0}  // 5: Second Tip (Center, shifted down by height)
+    };
+
+    // Base square indices (4 edges) + Sides connecting to the tip (4 edges)
+    uint8_t pyramidIndices[12][2] = {
+        {0, 1}, {1, 2}, {2, 3}, {3, 0}, // Base square
+        {0, 4}, {1, 4}, {2, 4}, {3, 4},  // Edges connecting base vertices to the tip (4)
+        {0, 5}, {1, 5}, {2, 5}, {3, 5}  // Edges connecting base vertices to the tip (5)
+    };
+
+
+    //-------------------------------
+    //-------------------------------
+    //-------------------------------
+
+    // Precompute sine and cos for angles ONCE per object (saves CPU time)
+    anglesHelper trig = precomputeTrig(angleX, angleY, angleZ);
+
+    //Loop through indices, translate to world position, project, and draw
+    for (int i = 0; i < 12; i++) {
+
+        // Get the two vertices that make up this edge
+        Vector3D v1 = pyramidVertices[pyramidIndices[i][0]];
+        Vector3D v2 = pyramidVertices[pyramidIndices[i][1]];
+
+        //draw that part of the shape
+        drawSegment(v1, v2,trig, startX, startY, startZ, color);
+        
+    }
+
+}
 
 
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
+// 3.14159265f
 
+void ST7735_DrawDodecahedronWireFrame(int32_t startX, int32_t startY, int32_t startZ, int32_t radius, float angleX, float angleY, float angleZ, uint16_t color) {
+    anglesHelper trig = precomputeTrig(angleX, angleY, angleZ);
+    
+    // Golden ratio scaling factors for a regular dodecahedron
+    int32_t a = (radius * 57) / 100;
+    int32_t b = (radius * 35) / 100;
+    int32_t c = (radius * 95) / 100;
 
+    // 20 vertices of a regular dodecahedron
+    Vector3D dodecVerts[20] = {
+        // 8 cube vertices
+        {  a,  a,  a }, { -a,  a,  a }, {  a, -a,  a }, { -a, -a,  a },
+        {  a,  a, -a }, { -a,  a, -a }, {  a, -a, -a }, { -a, -a, -a },
+        // 12 rectangular frame vertices
+        {  0,  b,  c }, {  0, -b,  c }, {  0,  b, -c }, {  0, -b, -c },
+        {  c,  0,  b }, { -c,  0,  b }, {  c,  0, -b }, { -c,  0, -b },
+        {  b,  c,  0 }, { -b,  c,  0 }, {  b, -c,  0 }, { -b, -c,  0 }
+    };
+
+    // 30 exact edge connections forming the 12 pentagonal faces
+    uint8_t dodecIndices[30][2] = {
+        {0, 8}, {0, 12}, {0, 16},
+        {1, 8}, {1, 13}, {1, 17},
+        {2, 9}, {2, 12}, {2, 18},
+        {3, 9}, {3, 13}, {3, 19},
+        {4, 10}, {4, 14}, {4, 16},
+        {5, 10}, {5, 15}, {5, 17},
+        {6, 11}, {6, 14}, {6, 18},
+        {7, 11}, {7, 15}, {7, 19},
+        {8, 9}, {10, 11},
+        {12, 14}, {13, 15},
+        {16, 17}, {18, 19}
+    };
+
+    for (int i = 0; i < 30; i++) {
+        Vector3D v1 = dodecVerts[dodecIndices[i][0]];
+        Vector3D v2 = dodecVerts[dodecIndices[i][1]];
+
+        drawSegment(v1, v2, trig, startX, startY, startZ, color);
+    }
+}
 
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
